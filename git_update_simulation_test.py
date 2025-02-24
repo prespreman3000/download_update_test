@@ -1,20 +1,64 @@
-import tkinter as tk
-from tkinter import messagebox
-import os
 import requests
-import json
+import zipfile
+import os
+import shutil
+from tkinter import messagebox
 
+# Define update URL (change this to your GitHub ZIP file or other source)
+UPDATE_URL = "https://github.com/prespreman3000/download_update_test/archive/refs/heads/master.zip"
 # URL of the check_update.json file in your GitHub repository
 CHECK_UPDATE_URL = "https://raw.githubusercontent.com/prespreman3000/download_update_test/master/check_update.json"
-
-# Local JSON file storing version info
+# Define where the update should be downloaded
 LOCAL_VERSION_FILE = "local_version.json"
+UPDATE_FILE = "update.zip"
+EXTRACT_FOLDER = "update_temp"
 
-
-# Function to simulate downloading the update
+# Function to simulate downloading and applying the update
 def download_update():
-    messagebox.showinfo("Update", "Downloading the latest update...")
-    
+    try:
+        messagebox.showinfo("Update", "Downloading the latest update...")
+
+        # Download the update file
+        response = requests.get(UPDATE_URL, stream=True)
+        if response.status_code == 200:
+            with open(UPDATE_FILE, "wb") as file:
+                for chunk in response.iter_content(chunk_size=1024):
+                    file.write(chunk)
+
+            messagebox.showinfo("Update", "Download complete. Installing update...")
+
+            # Extract the update
+            if os.path.exists(EXTRACT_FOLDER):
+                shutil.rmtree(EXTRACT_FOLDER)  # Remove old extracted files if they exist
+            os.makedirs(EXTRACT_FOLDER)
+
+            with zipfile.ZipFile(UPDATE_FILE, "r") as zip_ref:
+                zip_ref.extractall(EXTRACT_FOLDER)
+
+            # Copy extracted files to the main program directory
+            for item in os.listdir(EXTRACT_FOLDER):
+                source_path = os.path.join(EXTRACT_FOLDER, item)
+                destination_path = os.path.join(os.getcwd(), item)
+
+                if os.path.isdir(source_path):
+                    if os.path.exists(destination_path):
+                        shutil.rmtree(destination_path)  # Remove old directory
+                    shutil.copytree(source_path, destination_path)
+                else:
+                    shutil.copy2(source_path, destination_path)  # Copy new file
+
+            # Cleanup
+            os.remove(UPDATE_FILE)
+            shutil.rmtree(EXTRACT_FOLDER)
+
+            messagebox.showinfo("Update", "Update installed successfully. Restart the program to apply changes.")
+
+        else:
+            messagebox.showerror("Update Error", f"Failed to download update. HTTP Status: {response.status_code}")
+
+    except Exception as e:
+        messagebox.showerror("Update Error", f"An error occurred while updating: {e}")
+
 
 # Function to fetch and compare versions
 def check_for_update():
