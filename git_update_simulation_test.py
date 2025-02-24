@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox
+import datetime
 
 # Function to simulate downloading the update
 def download_update():
-    messagebox.showinfo("Update", "Downloading the latest update...")
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    messagebox.showinfo("Update", f"Downloading the latest update...\nCurrent time: {current_time}")
 
 # Set up the main window
 root = tk.Tk()
@@ -14,6 +16,4 @@ download_button = tk.Button(root, text="Download Update", command=download_updat
 download_button.pack(pady=20)
 
 # Run the application
-root.geometry("444x444")
 root.mainloop()
-
