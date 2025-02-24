@@ -2,78 +2,90 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 import requests
+import json
 
-# URL of the check_update.txt file in your GitHub repository
-CHECK_UPDATE_URL = "https://raw.githubusercontent.com/prespreman3000/download_update_test/master/check_update.txt"
+# URL of the check_update.json file in your GitHub repository
+CHECK_UPDATE_URL = "https://raw.githubusercontent.com/prespreman3000/download_update_test/master/check_update.json"
 
-# File where the current version will be stored
-LOCAL_VERSION_FILE = "local_version.txt"
+# Local JSON file storing version info
+LOCAL_VERSION_FILE = "local_version.json"
 
 
 # Function to simulate downloading the update
 def download_update():
     messagebox.showinfo("Update", "Downloading the latest update...")
+    
 
-
-# Function to fetch the latest version from the GitHub repository
+# Function to fetch and compare versions
 def check_for_update():
     local_version = read_local_version()
     if local_version is None:
         print("Local version could not be determined.")
+        update_status_label.config(text="Error: Unable to read local version.", fg="red")
         return
 
-    print(f"Local version: {local_version}")  # Print the local version
-
-    # URL to fetch the check_update.txt from GitHub
-    url = CHECK_UPDATE_URL
+    print(f"Local version: {local_version}")  # Debugging
 
     try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            remote_version = response.text.strip()  # Read the version from the text file
-            print(f"Remote version: {remote_version}")  # Print the remote version
+        # Fetch remote JSON
+        response = requests.get(CHECK_UPDATE_URL)
 
+        if response.status_code == 200:
+            remote_data = response.json()  # Parse JSON
+            print(f"Remote JSON Data: {remote_data}")  # Debugging
+            remote_version = remote_data.get("version")
+
+            if remote_version is None:
+                print("Error: Remote JSON does not contain 'version'.")
+                update_status_label.config(text="Error: Remote version invalid.", fg="red")
+                return
+
+            print(f"Remote version: {remote_version}")
+
+            # Compare versions
             if local_version == remote_version:
-                print("You have the latest version.")  # Local and remote versions match
+                print("You have the latest version.")
+                update_status_label.config(text="You have the latest version.", fg="blue")
             else:
                 print("An update is available.")
-                # Trigger the update logic here (e.g., downloading the new version)
+                user_choice = messagebox.askyesno("Update Available", f"A new update (v{remote_version}) is available! Do you want to update?")
+
+                if user_choice:
+                    download_update()
+                else:
+                    print("User declined the update.")
+                    update_status_label.config(text="Update available but declined.", fg="orange")
         else:
             print(f"Failed to fetch update file. HTTP Status Code: {response.status_code}")
+            update_status_label.config(text="Failed to check updates.", fg="red")
+
     except requests.exceptions.RequestException as e:
         print(f"Error fetching updates: {e}")
+        update_status_label.config(text="Network error: Unable to check updates.", fg="red")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        update_status_label.config(text="Error: Invalid JSON data.", fg="red")
 
 
-# Function to read the local version from a file
+# Function to read local version from JSON file
 def read_local_version():
     try:
-        with open("local_version.txt", "r") as version_file:
-            lines = version_file.readlines()
-            print("Contents of local_version.txt:")
-            for line in lines:
-                print(line.strip())  # Print each line for debugging
-            for line in lines:
-                if line.startswith("version="):  # Look for the version line
-                    version = line.split("=")[1].strip()  # Get the version number
-                    print(f"Extracted version: {version}")  # Print the extracted version
-                    return version
+        with open(LOCAL_VERSION_FILE, "r") as file:
+            data = json.load(file)  # Parse JSON
+            print(f"Local JSON Data: {data}")  # Debugging
+            return data.get("version")  # Extract version
     except FileNotFoundError:
-        print("local_version.txt not found, assuming no version set.")
+        print("version.json not found.")
         return None
-    except Exception as e:
-        print(f"Error reading version: {e}")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
         return None
-
-
-# Function to write the local version to a file
-def write_local_version(version):
-    with open(LOCAL_VERSION_FILE, "w") as file:
-        file.write(version)
 
 
 # Set up the main window
 root = tk.Tk()
-root.title("Simple Update App")
+root.geometry("600x400")
+root.title("Simple Update App v1.1.2")
 
 # Add a label to display the update status
 update_status_label = tk.Label(root, text="Checking for updates...", font=("Arial", 12))
