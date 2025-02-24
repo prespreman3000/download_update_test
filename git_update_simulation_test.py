@@ -15,8 +15,8 @@ UPDATE_URL = "https://github.com/prespreman3000/download_update_test/archive/ref
 # URL of the check_update.json file in your GitHub repository
 CHECK_UPDATE_URL = "https://raw.githubusercontent.com/prespreman3000/download_update_test/master/check_update.json"
 # Define where the update should be downloaded
-LOCAL_VERSION_JSON = os.path.join(base_dir, 'local_version.json')
-UPDATE_FILE = os.path.join(base_dir, 'update.zip')
+LOCAL_VERSION_JSON = os.path.join(BASE_DIR, 'check_updates.json')
+UPDATE_FILE = os.path.join(BASE_DIR, 'update.zip')
 EXTRACT_FOLDER = os.path.join(BASE_DIR, "temp_update")  # Use a temporary directory
 
 # Function to simulate downloading and applying the update
@@ -24,7 +24,7 @@ def download_update():
     try:
         messagebox.showinfo("Update", "Downloading the latest update...")
 
-        # Download the update file
+        # Download the update ZIP
         response = requests.get(UPDATE_URL, stream=True)
         if response.status_code == 200:
             with open(UPDATE_FILE, "wb") as file:
@@ -32,31 +32,33 @@ def download_update():
                     file.write(chunk)
 
             messagebox.showinfo("Update", "Download complete. Installing update...")
-            # Before extraction, ensure it's clean
+
+            # Ensure a clean extraction directory
             if os.path.exists(EXTRACT_FOLDER):
                 shutil.rmtree(EXTRACT_FOLDER)
 
-            # Extract the ZIP to EXTRACT_FOLDER
+            # Extract the ZIP into EXTRACT_FOLDER
             with zipfile.ZipFile(UPDATE_FILE, 'r') as zip_ref:
                 zip_ref.extractall(EXTRACT_FOLDER)
 
-            # Copy extracted files
-            for item in os.listdir(EXTRACT_FOLDER):
-                source_path = os.path.join(EXTRACT_FOLDER, item)
-                destination_path = os.path.join(os.getcwd(), item)
+            # Overwrite existing files in BASE_DIR
+            for root, dirs, files in os.walk(EXTRACT_FOLDER):
+                for dir_name in dirs:
+                    target_dir = os.path.join(BASE_DIR, os.path.relpath(os.path.join(root, dir_name), EXTRACT_FOLDER))
+                    if not os.path.exists(target_dir):
+                        os.makedirs(target_dir)
 
-                if os.path.isdir(source_path):
-                    if os.path.exists(destination_path):
-                        shutil.rmtree(destination_path)  # Remove old directory
-                    shutil.copytree(source_path, destination_path)
-                else:
-                    if os.path.exists(destination_path):
-                        os.remove(destination_path)  # Remove old file
-                    shutil.copy2(source_path, destination_path)  # Copy new file
+                for file_name in files:
+                    source_file = os.path.join(root, file_name)
+                    relative_path = os.path.relpath(source_file, EXTRACT_FOLDER)
+                    destination_file = os.path.join(BASE_DIR, relative_path)
+
+                    # Overwrite file in BASE_DIR
+                    shutil.copy2(source_file, destination_file)
 
             # Cleanup
             os.remove(UPDATE_FILE)
-            shutil.rmtree(EXTRACT_FOLDER)  # Now safely delete only the temp_update folder
+            shutil.rmtree(EXTRACT_FOLDER)
 
             messagebox.showinfo("Update", "Update installed successfully. Restart the program to apply changes.")
 
@@ -65,6 +67,7 @@ def download_update():
 
     except Exception as e:
         messagebox.showerror("Update Error", f"An error occurred while updating: {e}")
+
 
 # Function to fetch and compare versions
 def check_for_update():
@@ -135,7 +138,7 @@ def read_local_version():
 # Set up the main window
 root = tk.Tk()
 root.geometry("600x400")
-root.title("Simple Update App v2 ")
+root.title("Simple Update App ")
 
 # Add a label to display the update status
 update_status_label = tk.Label(root, text="Checking for updates...", font=("Arial", 12))
