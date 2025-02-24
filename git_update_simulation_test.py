@@ -33,32 +33,25 @@ def download_update():
 
             messagebox.showinfo("Update", "Download complete. Installing update...")
 
-            # Ensure a clean extraction directory
-            if os.path.exists(EXTRACT_FOLDER):
-                shutil.rmtree(EXTRACT_FOLDER)
+            # Delete old files in BASE_DIR except this script
+            for item in os.listdir(BASE_DIR):
+                item_path = os.path.join(BASE_DIR, item)
+                
+                # Skip this script to avoid breaking the update process
+                if item == os.path.basename(__file__):
+                    continue
 
-            # Extract the ZIP into EXTRACT_FOLDER
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)  # Remove directory
+                else:
+                    os.remove(item_path)  # Remove file
+
+            # Extract the ZIP directly into BASE_DIR
             with zipfile.ZipFile(UPDATE_FILE, 'r') as zip_ref:
-                zip_ref.extractall(EXTRACT_FOLDER)
-
-            # Overwrite existing files in BASE_DIR
-            for root, dirs, files in os.walk(EXTRACT_FOLDER):
-                for dir_name in dirs:
-                    target_dir = os.path.join(BASE_DIR, os.path.relpath(os.path.join(root, dir_name), EXTRACT_FOLDER))
-                    if not os.path.exists(target_dir):
-                        os.makedirs(target_dir)
-
-                for file_name in files:
-                    source_file = os.path.join(root, file_name)
-                    relative_path = os.path.relpath(source_file, EXTRACT_FOLDER)
-                    destination_file = os.path.join(BASE_DIR, relative_path)
-
-                    # Overwrite file in BASE_DIR
-                    shutil.copy2(source_file, destination_file)
+                zip_ref.extractall(BASE_DIR)
 
             # Cleanup
             os.remove(UPDATE_FILE)
-            shutil.rmtree(EXTRACT_FOLDER)
 
             messagebox.showinfo("Update", "Update installed successfully. Restart the program to apply changes.")
 
@@ -67,6 +60,7 @@ def download_update():
 
     except Exception as e:
         messagebox.showerror("Update Error", f"An error occurred while updating: {e}")
+
 
 
 # Function to fetch and compare versions
