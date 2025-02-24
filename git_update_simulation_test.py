@@ -7,13 +7,17 @@ from tkinter import messagebox
 import json
 
 # Define update URL (change this to your GitHub ZIP file or other source)
+
+# Define the base directory relative to the script location
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 UPDATE_URL = "https://github.com/prespreman3000/download_update_test/archive/refs/heads/master.zip"
 # URL of the check_update.json file in your GitHub repository
 CHECK_UPDATE_URL = "https://raw.githubusercontent.com/prespreman3000/download_update_test/master/check_update.json"
 # Define where the update should be downloaded
-LOCAL_VERSION_FILE = "local_version.json"
-UPDATE_FILE = "update.zip"
-EXTRACT_FOLDER = r"C:\Users\azdaja\PycharmProjectLazyBoy\finalna_proba_UI\TEST FUNCTIONS\git_download_testing"
+LOCAL_VERSION_JSON = os.path.join(base_dir, 'local_version.json')
+UPDATE_FILE = os.path.join(base_dir, 'update.zip')
+EXTRACT_FOLDER = os.path.join(BASE_DIR, "temp_update")  # Use a temporary directory
 
 # Function to simulate downloading and applying the update
 def download_update():
@@ -28,18 +32,15 @@ def download_update():
                     file.write(chunk)
 
             messagebox.showinfo("Update", "Download complete. Installing update...")
+            # Before extraction, ensure it's clean
+            if os.path.exists(EXTRACT_FOLDER):
+                shutil.rmtree(EXTRACT_FOLDER)
 
-            # Copy extracted files to the main program directory
-            for item in os.listdir(EXTRACT_FOLDER):
-                source_path = os.path.join(EXTRACT_FOLDER, item)
-                destination_path = os.path.join(os.getcwd(), item)
+            # Extract the ZIP to EXTRACT_FOLDER
+            with zipfile.ZipFile(UPDATE_FILE, 'r') as zip_ref:
+                zip_ref.extractall(EXTRACT_FOLDER)
 
-                if os.path.isdir(source_path):
-                    shutil.copytree(source_path, destination_path, dirs_exist_ok=True)  # Copy directory
-                else:
-                    shutil.copy2(source_path, destination_path)  # Copy file, overwriting if exists
-
-            # Copy extracted files to the main program directory
+            # Copy extracted files
             for item in os.listdir(EXTRACT_FOLDER):
                 source_path = os.path.join(EXTRACT_FOLDER, item)
                 destination_path = os.path.join(os.getcwd(), item)
@@ -55,7 +56,7 @@ def download_update():
 
             # Cleanup
             os.remove(UPDATE_FILE)
-            shutil.rmtree(EXTRACT_FOLDER)
+            shutil.rmtree(EXTRACT_FOLDER)  # Now safely delete only the temp_update folder
 
             messagebox.showinfo("Update", "Update installed successfully. Restart the program to apply changes.")
 
@@ -64,8 +65,6 @@ def download_update():
 
     except Exception as e:
         messagebox.showerror("Update Error", f"An error occurred while updating: {e}")
-
-
 
 # Function to fetch and compare versions
 def check_for_update():
@@ -121,7 +120,7 @@ def check_for_update():
 # Function to read local version from JSON file
 def read_local_version():
     try:
-        with open(LOCAL_VERSION_FILE, "r") as file:
+        with open(LOCAL_VERSION_JSON, "r") as file:
             data = json.load(file)  # Parse JSON
             print(f"Local JSON Data: {data}")  # Debugging
             return data.get("version")  # Extract version
@@ -136,7 +135,7 @@ def read_local_version():
 # Set up the main window
 root = tk.Tk()
 root.geometry("600x400")
-root.title("Simple Update App v1.1.4")
+root.title("Simple Update App ")
 
 # Add a label to display the update status
 update_status_label = tk.Label(root, text="Checking for updates...", font=("Arial", 12))
