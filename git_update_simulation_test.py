@@ -47,6 +47,8 @@ def download_update():
                         shutil.rmtree(destination_path)  # Remove old directory
                     shutil.copytree(source_path, destination_path)
                 else:
+                    if os.path.exists(destination_path):
+                        os.remove(destination_path)  # Remove old file
                     shutil.copy2(source_path, destination_path)  # Copy new file
 
             # Cleanup
@@ -60,6 +62,7 @@ def download_update():
 
     except Exception as e:
         messagebox.showerror("Update Error", f"An error occurred while updating: {e}")
+
 
 
 # Function to fetch and compare versions
@@ -131,7 +134,7 @@ def read_local_version():
 # Set up the main window
 root = tk.Tk()
 root.geometry("600x400")
-root.title("Simple Update App v1.1.3")
+root.title("Simple Update App v1.1.2")
 
 # Add a label to display the update status
 update_status_label = tk.Label(root, text="Checking for updates...", font=("Arial", 12))
