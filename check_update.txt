@@ -1,2 +1,3 @@
+new_update=True
 update=v1.1.5
 version=112233
