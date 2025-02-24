@@ -29,13 +29,15 @@ def download_update():
 
             messagebox.showinfo("Update", "Download complete. Installing update...")
 
-            # Extract the update
-            if os.path.exists(EXTRACT_FOLDER):
-                shutil.rmtree(EXTRACT_FOLDER)  # Remove old extracted files if they exist
-            os.makedirs(EXTRACT_FOLDER)
+            # Copy extracted files to the main program directory
+            for item in os.listdir(EXTRACT_FOLDER):
+                source_path = os.path.join(EXTRACT_FOLDER, item)
+                destination_path = os.path.join(os.getcwd(), item)
 
-            with zipfile.ZipFile(UPDATE_FILE, "r") as zip_ref:
-                zip_ref.extractall(EXTRACT_FOLDER)
+                if os.path.isdir(source_path):
+                    shutil.copytree(source_path, destination_path, dirs_exist_ok=True)  # Copy directory
+                else:
+                    shutil.copy2(source_path, destination_path)  # Copy file, overwriting if exists
 
             # Copy extracted files to the main program directory
             for item in os.listdir(EXTRACT_FOLDER):
