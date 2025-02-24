@@ -1,4 +1,0 @@
-new_update=True
-Last checked: 2025-02-23
-update=v1.1.5
-version=112233
