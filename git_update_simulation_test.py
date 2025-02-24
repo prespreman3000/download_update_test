@@ -134,7 +134,7 @@ def read_local_version():
 # Set up the main window
 root = tk.Tk()
 root.geometry("600x400")
-root.title("Simple Update App v1.1.2")
+root.title("Simple Update App v1.1.4")
 
 # Add a label to display the update status
 update_status_label = tk.Label(root, text="Checking for updates...", font=("Arial", 12))
