@@ -2,7 +2,9 @@ import requests
 import zipfile
 import os
 import shutil
+import tkinter as tk
 from tkinter import messagebox
+import json
 
 # Define update URL (change this to your GitHub ZIP file or other source)
 UPDATE_URL = "https://github.com/prespreman3000/download_update_test/archive/refs/heads/master.zip"
@@ -129,7 +131,7 @@ def read_local_version():
 # Set up the main window
 root = tk.Tk()
 root.geometry("600x400")
-root.title("Simple Update App v1.1.2")
+root.title("Simple Update App v1.1.3")
 
 # Add a label to display the update status
 update_status_label = tk.Label(root, text="Checking for updates...", font=("Arial", 12))
