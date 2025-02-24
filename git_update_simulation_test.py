@@ -5,6 +5,7 @@ import shutil
 import tkinter as tk
 from tkinter import messagebox
 import json
+import ctypes
 
 # Define update URL (change this to your GitHub ZIP file or other source)
 
@@ -20,9 +21,21 @@ UPDATE_FILE = os.path.join(BASE_DIR, 'update.zip')
 EXTRACT_FOLDER = os.path.join(BASE_DIR, "temp_update")  # Use a temporary directory
 
 # Function to simulate downloading and applying the update
+def is_admin():
+    """Check if script is running with admin privileges."""
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
 def download_update():
     try:
         messagebox.showinfo("Update", "Downloading the latest update...")
+
+        # Ensure script is running as admin
+        if not is_admin():
+            messagebox.showerror("Permission Error", "Please run this script as Administrator.")
+            return
 
         # Download the update ZIP
         response = requests.get(UPDATE_URL, stream=True)
@@ -33,20 +46,24 @@ def download_update():
 
             messagebox.showinfo("Update", "Download complete. Installing update...")
 
-            # Delete old files in BASE_DIR except this script
+            # Unlock and delete old files in BASE_DIR (except this script)
             for item in os.listdir(BASE_DIR):
                 item_path = os.path.join(BASE_DIR, item)
-                
-                # Skip this script to avoid breaking the update process
+
+                # Skip this script to avoid breaking execution
                 if item == os.path.basename(__file__):
                     continue
 
-                if os.path.isdir(item_path):
-                    shutil.rmtree(item_path)  # Remove directory
-                else:
-                    os.remove(item_path)  # Remove file
+                try:
+                    if os.path.isdir(item_path):
+                        shutil.rmtree(item_path, ignore_errors=True)  # Force remove directory
+                    else:
+                        os.chmod(item_path, 0o777)  # Change permissions to writable
+                        os.remove(item_path)  # Remove file
+                except PermissionError:
+                    messagebox.showwarning("Permission Warning", f"Skipping file: {item_path} (Access Denied)")
 
-            # Extract the ZIP directly into BASE_DIR
+            # Extract ZIP directly into BASE_DIR
             with zipfile.ZipFile(UPDATE_FILE, 'r') as zip_ref:
                 zip_ref.extractall(BASE_DIR)
 
@@ -60,7 +77,6 @@ def download_update():
 
     except Exception as e:
         messagebox.showerror("Update Error", f"An error occurred while updating: {e}")
-
 
 
 # Function to fetch and compare versions
@@ -132,7 +148,7 @@ def read_local_version():
 # Set up the main window
 root = tk.Tk()
 root.geometry("600x400")
-root.title("Simple Update App v2 ")
+root.title("Simple Update App 321312")
 
 # Add a label to display the update status
 update_status_label = tk.Label(root, text="Checking for updates...", font=("Arial", 12))
