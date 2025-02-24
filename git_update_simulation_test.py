@@ -13,7 +13,7 @@ CHECK_UPDATE_URL = "https://raw.githubusercontent.com/prespreman3000/download_up
 # Define where the update should be downloaded
 LOCAL_VERSION_FILE = "local_version.json"
 UPDATE_FILE = "update.zip"
-EXTRACT_FOLDER = "update_temp"
+EXTRACT_FOLDER = r"C:\Users\azdaja\PycharmProjectLazyBoy\finalna_proba_UI\TEST FUNCTIONS\git_download_testing"
 
 # Function to simulate downloading and applying the update
 def download_update():
